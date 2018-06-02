@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Tickets App</title>
+    <script
+            src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+    <link href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css"
+          rel="stylesheet">
+    <script
+            src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+<h1 align="center">מסך מנהל</h1>
+<div align="center" style="margin: auto;
+  width: 50%;
+  border: 1px solid black;
+  padding: 10px;">
+    <table id="table" class="display"></table>
+</div>
+
+<script>
+    $(document).ready(function() {
+        var ticket_status = [
+            "הפנייה לעורך דין",
+            "בקשה להשפט",
+            "הגשת ערעור",
+            "תשלום דוח"
+        ];
+
+
+        /* Formatting function for row details - modify as you need */
+        function format ( d ) {
+            // `d` is the original data object for the row
+            return '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">'+
+                '<tr>'+
+                '<td>שם מלא</td>'+
+                '<td>'+d.name+'</td>'+
+                '</tr>'+
+                '<tr>'+
+                '<td>מספר טלפון</td>'+
+                '<td>'+d.extn+'</td>'+
+                '</tr>'+
+                '<tr>'+
+                '<td>נתונים נוספים</td>'+
+                '<td>בובו קובו</td>'+
+                '</tr>'+
+                '</table>';
+        }
+
+        var table = $('#table').DataTable( {
+            "processing": true,
+            "ajax" : "get_admin_tickets",
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.16/i18n/Hebrew.json"
+            },
+            columns: [
+                {
+                    "className":      'details-control',
+                    "orderable":      false,
+                    "data":           null,
+                    "defaultContent": ''
+                },
+                {
+                    "title": "שם הנהג",
+                    "data": "DriverName"
+                },
+                {
+                    "title": "מספר מזהה",
+                    "data": "id"
+                },
+                {
+                    "title": "סטטוס נוכחי",
+                    "data": "OfficeStatus"
+                },
+                {
+                    "title": "שינוי סטטוס",
+                    "render": function(d,t,r,m){
+                        var $div = $('<div></div>');
+                        var $select = $("<select></select>", {
+                            "id": m.row+"change-status"
+                        });
+
+
+                        $.each(ticket_status, function(k,v){
+                            var $option = $("<option></option>", {
+                                "text": v,
+                                "value": v
+                            });
+                            if(d === v){
+                                $option.attr("selected", "selected")
+                            }
+                            $select.append($option);
+                        });
+
+                        var $button = $("<button></button>", {
+                            "class": "change",
+                            "text": "שנה",
+                            "value": m.row
+                        });
+
+                        $div.append($select.prop("outerHTML"));
+                        $div.append($button.prop("outerHTML"));
+
+                        return $div.prop("outerHTML");
+                    }
+                },
+            ],
+            "order": [[1, 'asc']]
+        } );
+
+        // Add event listener for opening and closing details
+        $('#table tbody').on('click', 'td.details-control', function () {
+            var tr = $(this).closest('tr');
+            var row = table.row( tr );
+
+            if ( row.child.isShown() ) {
+                // This row is already open - close it
+                row.child.hide();
+                tr.removeClass('shown');
+            }
+            else {
+                // Open this row
+                row.child( format(row.data()) ).show();
+                tr.addClass('shown');
+            }
+        } );
+
+        // Add event listener for change status button
+        $(document).on('click', '.change', function(){
+            //Get tow number
+            $row_number = $(this).prop("value");
+            //Get selected text from dropdown
+            $selected_status = $('#'+$row_number+'change-status option:selected').text();
+            //Get row data
+            var tr = $(this).closest('tr');
+            var row = table.row( tr );
+            //Sent PUT request to server to update ticket
+            $.ajax({
+                method: "PUT",
+                url: "update_ticket_status",
+                data: {
+                    id: row.data().id,
+                    ticket_status: $selected_status
+                },
+                success: function(){
+                    table.ajax.reload();
+                }
+
+            })
+        } );
+    });
+</script>
+</body>
+</html>
