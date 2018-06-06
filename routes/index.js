@@ -241,6 +241,16 @@ router.get('/get_admin_tickets' , function(req, res, next){
         });
 });
 
+/* get admin tickets */
+router.get('/get_admin_ticket/${ticket_id}' , function(req, res, next){
+    TicketReport.findOne({where:{ id: req.params.ticket_id }}).then(ticket => {
+        res.status(200).json({data : ticket});
+    })
+        .catch(function (err) {
+        res.status(400).json({message:'Error getting ticket ticket_id: '+ req.params.ticket_id });
+        });
+});
+
 /* get tickets */
 router.get('/get_tickets' , function(req, res, next){
     verifyToken(req,res);
