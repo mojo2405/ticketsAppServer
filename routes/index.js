@@ -12,7 +12,7 @@ admin.initializeApp({
     databaseURL: "https://traffictickets-f193d.firebaseio.com"
 });
 
-const sequelize = new Sequelize('mysql://root@127.0.0.1:3306/database_development');
+const sequelize = new Sequelize('mysql://root@35.195.169.235:3306/database_development');
 sequelize
     .authenticate()
     .then(() => {
@@ -242,7 +242,7 @@ router.get('/get_admin_tickets' , function(req, res, next){
 });
 
 /* get admin tickets */
-router.get('/get_admin_ticket/${ticket_id}' , function(req, res, next){
+router.get('/get_admin_ticket/:ticket_id' , function(req, res, next){
     TicketReport.findOne({where:{ id: req.params.ticket_id }}).then(ticket => {
         res.status(200).json({data : ticket});
     })
