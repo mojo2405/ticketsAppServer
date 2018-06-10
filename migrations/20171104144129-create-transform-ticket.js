@@ -12,7 +12,7 @@ module.exports = {
         type: Sequelize.INTEGER,
           references: {
               // This is a reference to another model
-              model: 'consultancy_trackings',
+              model: 'Consultancy_Trackings',
 
               // This is the column name of the referenced model
               key: 'id'

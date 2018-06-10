@@ -12,7 +12,21 @@ admin.initializeApp({
     databaseURL: "https://traffictickets-f193d.firebaseio.com"
 });
 
-const sequelize = new Sequelize('mysql://root@35.195.169.235:3306/database_development');
+// const sequelize = new Sequelize('mysql://root:Cowabunga1!@azrieldb.cqswtuvecky7.eu-central-1.rds.amazonaws.com:3306/database_development');
+const sequelize = new Sequelize('database_development', 'root', 'Cowabunga1!', {
+  host: 'azrieldb.cqswtuvecky7.eu-central-1.rds.amazonaws.com',
+  dialect: 'mysql',
+  operatorsAliases: false,
+
+  pool: {
+    max: 5,
+    min: 0,
+    acquire: 30000,
+    idle: 10000
+  },
+
+});
+
 sequelize
     .authenticate()
     .then(() => {
