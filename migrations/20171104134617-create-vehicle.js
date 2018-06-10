@@ -25,7 +25,7 @@ module.exports = {
 
             references: {
                 // This is a reference to another model
-                model: 'drivers',
+                model: 'Drivers',
 
                 // This is the column name of the referenced model
                 key: 'id'

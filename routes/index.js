@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const Sequelize = require('sequelize');
 var admin = require("firebase-admin");
 var moment = require('moment');
+var request = require('request');
 var serviceAccount = require("./serviceAccountKey.json");
 
 admin.initializeApp({
@@ -12,7 +13,6 @@ admin.initializeApp({
     databaseURL: "https://traffictickets-f193d.firebaseio.com"
 });
 
-// const sequelize = new Sequelize('mysql://root:Cowabunga1!@azrieldb.cqswtuvecky7.eu-central-1.rds.amazonaws.com:3306/database_development');
 const sequelize = new Sequelize('database_development', 'root', 'Cowabunga1!', {
   host: 'azrieldb.cqswtuvecky7.eu-central-1.rds.amazonaws.com',
   dialect: 'mysql',
@@ -90,6 +90,52 @@ router.post('/register', function(req, res, next) {
 
 });
 
+
+/* Social Login */
+router.post('/social-login', function(req, res, next) {
+	console.log('Got to social-login');
+    console.log('Body is ',req.body);
+	
+	if (!req.body.email) {
+		console.log("no email found in body");
+		return res.status(400).json({message:'No email found in body'});
+	}
+	
+	if (!req.body.access_token) {
+		console.log("no email found in body");
+		return res.status(400).json({message:'No access token found in body'});
+	}
+	
+	// Check access token is valid
+	request('https://graph.facebook.com/me?access_token='+req.body.access_token, function (error, response, body) {
+	  // console.log('error:', error); // Print the error if one occurred
+	  //console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+	  //console.log('body:', body); // Print the HTML for the Google homepage.
+	  if ( !response || response.statusCode != 200) {
+		  res.status(401).json({message:'Access token is invalid'});
+	  }
+	});
+	
+	User.findOne({where:{ username: req.body.email }})
+		.then(function (user) {
+			if(!user){
+				User.create({
+					username: req.body.email,
+					email: req.body.email
+				})
+					.then(function(user){
+						res.status(200).json({'token':createToken(user,req)});
+					});
+			} else {
+				res.status(200).json({'token':createToken(user,req)});
+			}
+		})
+		.catch(function (err) {
+			console.log("Got error: " + err.message);
+			res.status(400).json({message:'Error creating user: ' + err.message});
+		});
+
+});
 
 /* login */
 router.post('/login', function(req, res, next) {
@@ -363,6 +409,18 @@ router.put('/update_ticket_status' , function(req, res, next){
 });
 
 module.exports = router;
+
+function createToken(user,req) {
+	var myToken = jwt.sign({ user: user.id },
+		'secret',
+		{ expiresIn: 24 * 60 * 60 });
+
+	user.update({
+		pushToken: req.body.pushToken
+	}).then(() => {
+		return myToken;
+	});
+}
 
 function verifyToken(req,res){
     var token = req.body.token || req.headers["x-access-token"];
