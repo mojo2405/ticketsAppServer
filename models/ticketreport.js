@@ -57,6 +57,6 @@ module.exports = (sequelize, DataTypes) => {
         // associations can be defined here
       }
     }
-  });
+  } , {charset: 'utf8',collate: 'utf8_unicode_ci'});
   return TicketReport;
 };

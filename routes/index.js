@@ -24,6 +24,11 @@ const sequelize = new Sequelize('database_development', 'root', 'Cowabunga1!', {
     acquire: 30000,
     idle: 10000
   },
+  define: {
+    charset: 'utf8',
+    collate: 'utf8_general_ci', 
+    timestamps: true
+  },
 
 });
 
@@ -46,6 +51,7 @@ const User = sequelize.import(__dirname + "/../models/user");
 const Driver = sequelize.import(__dirname + "/../models/driver");
 const TicketReport = sequelize.import(__dirname + "/../models/ticketreport");
 const ConsultancyTracking = sequelize.import(__dirname + "/../models/consultancy_tracking");
+const Leads = sequelize.import(__dirname + "/../models/leads");
 
 // MODELS DEPENDANCIES
 User.hasMany(Driver,{as:'Drivers'});
@@ -92,7 +98,7 @@ router.post('/register', function(req, res, next) {
 
 
 /* Social Login */
-router.post('/social-login', function(req, res, next) {
+router.post('/social_login', function(req, res, next) {
 	console.log('Got to social-login');
     console.log('Body is ',req.body);
 	
@@ -201,6 +207,21 @@ router.post('/add_driver', function(req, res, next) {
 
 });
 
+/* add lead */
+router.post('/add_lead', function(req, res, next) {
+		Leads.create({
+			name  : req.body.name,
+			phone : req.body.phone,
+			email : req.body.email
+		}).then(lead => {
+			res.status(200).json({"message":"ok"});
+		})
+        .catch(function (err) {
+            res.status(400).json({message:'Error creating lead: '+ err.message});
+        });
+
+});
+
 /* get drivers */
 router.get('/get_drivers' , function(req, res, next){
     verifyToken(req,res);
@@ -227,17 +248,15 @@ router.post('/add_ticket', function(req, res, next) {
     verifyToken(req,res);
     console.log(req.body);
 
-    Driver.findOne({where:{ id: req.body.id }})
-        .then(function (driver) {
-            if(!driver){
+    User.findOne({where:{ username: req.body.email }})
+        .then(function (user) {
+            if(!user){
 
-                res.status(404).json('Driver was not found!');
+                res.status(404).json('User was not found!');
 
             } else {
                 TicketReport.create({
-                    userId: driver.userId,
-                    driverUserId : req.body.id,
-                    DriverRequest: req.body.DriverRequest,
+                    userId: user.id,
                     DriverName: req.body.DriverName,
                     PenaltyNumber: req.body.PenaltyNumber,
                     IdPassportNumber: req.body.IdPassportNumber,
@@ -266,22 +285,13 @@ router.post('/add_ticket', function(req, res, next) {
                     PenaltyDate:  req.body.PenaltyDate,
                     OfficeStatus: "ממתין לטיפול"
                 }).then(ticket => {
-                    User.findOne({where:{ id: ticket.userId }})
-                    .then(function (user) {
-                        if(!user){
+                    
+					var tickets = user.getTicketReports().then(tickets => {
+						return res.status(200).json({"tickets":tickets});
+					});
 
-                            res.status(404).json('User was not found!');
-
-                        } else {
-                            var tickets = user.getTicketReports().then(tickets => {
-                                res.status(200).json(tickets);
-                        });
-
-                        }
-                    });
-            });
-
-            }
+				});
+			}
         })
         .catch(function (err) {
             res.status(400).json({message:'Error creating Ticket: '+ err.message});
@@ -415,6 +425,9 @@ function createToken(user,req) {
 		'secret',
 		{ expiresIn: 24 * 60 * 60 });
 
+		console.log("got new tokken: ",myToken);
+		return myToken;
+		
 	user.update({
 		pushToken: req.body.pushToken
 	}).then(() => {
@@ -436,6 +449,7 @@ function verifyToken(req,res){
             }
         });
     } else {
+		console.error("Token not provided");
         res.status(403).send("Token not provided");
     }
 }
