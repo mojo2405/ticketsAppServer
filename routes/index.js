@@ -6,11 +6,11 @@ const Sequelize = require('sequelize');
 var admin = require("firebase-admin");
 var moment = require('moment');
 var request = require('request');
-var serviceAccount = require("./serviceAccountKey.json");
+var serviceAccount = require("./reports-app-203722-firebase-adminsdk-0tna4-58f28b5c7b.json");
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://traffictickets-f193d.firebaseio.com"
+    databaseURL: "https://reports-app-203722.firebaseio.com/"
 });
 
 const sequelize = new Sequelize('database_development', 'root', 'Cowabunga1!', {
@@ -127,18 +127,24 @@ router.post('/social_login', function(req, res, next) {
 			if(!user){
 				User.create({
 					username: req.body.email,
-					email: req.body.email
+					email: req.body.email,
+					pushToken: req.body.pushToken
 				})
 					.then(function(user){
 						res.status(200).json({'token':createToken(user,req)});
 					});
 			} else {
-				res.status(200).json({'token':createToken(user,req)});
+				user.update({
+					pushToken: req.body.pushToken
+				})
+				.then((user) => {
+					res.status(200).json({'token':createToken(user,req)});
+				});
 			}
 		})
 		.catch(function (err) {
 			console.log("Got error: " + err.message);
-			res.status(400).json({message:'Error creating user: ' + err.message});
+			res.status(400).json({message:'Error in social login: ' + err.message});
 		});
 
 });
@@ -388,10 +394,15 @@ router.put('/update_ticket_status' , function(req, res, next){
                                 .then(function(response) {
                                     // See the MessagingDevicesResponse reference documentation for
                                     // the contents of response.
-                                    console.log("Successfully sent message:", response);
-                                    var tickets = user.getTicketReports().then(tickets => {
-                                        res.status(200).json(tickets);
-                                    });
+									if (response.results && response.results["error"]){
+										console.error("Failed to send push message:", response.results["error"]);
+									}else{
+										console.log("Successfully sent message:", response);
+									}
+									var tickets = user.getTicketReports().then(tickets => {
+										res.status(200).json(tickets);
+									});
+                                    
                                 })
                                 .catch(function(error) {
                                     console.log("Error sending message:", error);
