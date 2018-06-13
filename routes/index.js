@@ -112,15 +112,26 @@ router.post('/social_login', function(req, res, next) {
 		return res.status(400).json({message:'No access token found in body'});
 	}
 	
-	// Check access token is valid
-	request('https://graph.facebook.com/me?access_token='+req.body.access_token, function (error, response, body) {
-	  // console.log('error:', error); // Print the error if one occurred
-	  //console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
-	  //console.log('body:', body); // Print the HTML for the Google homepage.
-	  if ( !response || response.statusCode != 200) {
-		  res.status(401).json({message:'Access token is invalid'});
-	  }
-	});
+	if (req.body.loginType ==  "facebook")
+	{
+		// Check access token is valid
+		request('https://graph.facebook.com/me?access_token='+req.body.access_token, function (error, response, body) {
+		  // console.log('error:', error); // Print the error if one occurred
+		  //console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+		  //console.log('body:', body); // Print the HTML for the Google homepage.
+		  if ( error || response.statusCode != 200 || !response) {
+			  return res.status(401).json({message:'Access token is invalid'});
+		  }
+		});
+	} else if (req.body.loginType ==  "google") {
+		request('https://www.googleapis.com/oauth2/v3/tokeninfo?id_token='+req.body.access_token, function (error, response, body) {
+			if ( error || response.statusCode != 200 || !response) {
+			  return res.status(401).json({message:'Access token is invalid'});
+			}
+		});
+	}else {
+		return res.status(401).json({message:'Login Type is invalid. ' + req.body.loginType});
+	}
 	
 	User.findOne({where:{ username: req.body.email }})
 		.then(function (user) {
@@ -131,20 +142,20 @@ router.post('/social_login', function(req, res, next) {
 					pushToken: req.body.pushToken
 				})
 					.then(function(user){
-						res.status(200).json({'token':createToken(user,req)});
+						return res.status(200).json({'token':createToken(user,req)});
 					});
 			} else {
 				user.update({
 					pushToken: req.body.pushToken
 				})
 				.then((user) => {
-					res.status(200).json({'token':createToken(user,req)});
+					return res.status(200).json({'token':createToken(user,req)});
 				});
 			}
 		})
 		.catch(function (err) {
 			console.log("Got error: " + err.message);
-			res.status(400).json({message:'Error in social login: ' + err.message});
+			return res.status(400).json({message:'Error in social login: ' + err.message});
 		});
 
 });
