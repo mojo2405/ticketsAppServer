@@ -7,30 +7,42 @@ var admin = require("firebase-admin");
 var moment = require('moment');
 var request = require('request');
 var serviceAccount = require("./reports-app-203722-firebase-adminsdk-0tna4-58f28b5c7b.json");
+require('dotenv-safe').config();
+
+var env       = process.env.NODE_ENV || 'development';
+var config    = require(__dirname + '/../config/config.json')[env];
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: "https://reports-app-203722.firebaseio.com/"
 });
+console.log(process.env.NODE_ENV);
 
-const sequelize = new Sequelize('database_development', 'root', 'Cowabunga1!', {
-  host: 'azrieldb.cqswtuvecky7.eu-central-1.rds.amazonaws.com',
-  dialect: 'mysql',
-  operatorsAliases: false,
+if (config.use_env_variable) {
+  var sequelize = new Sequelize(process.env[config.use_env_variable]);
+} else {
+  var sequelize = new Sequelize(config.database, config.username, config.password, config);
+  
+}
 
-  pool: {
-    max: 5,
-    min: 0,
-    acquire: 30000,
-    idle: 10000
-  },
-  define: {
-    charset: 'utf8',
-    collate: 'utf8_general_ci', 
-    timestamps: true
-  },
+// const sequelize = new Sequelize('database_development', 'root', 'Cowabunga1!', {
+  // host: 'azrieldb.cqswtuvecky7.eu-central-1.rds.amazonaws.com',
+  // dialect: 'mysql',
+  // operatorsAliases: false,
 
-});
+  // pool: {
+    // max: 5,
+    // min: 0,
+    // acquire: 30000,
+    // idle: 10000
+  // },
+  // define: {
+    // charset: 'utf8',
+    // collate: 'utf8_general_ci', 
+    // timestamps: true
+  // },
+
+// });
 
 sequelize
     .authenticate()

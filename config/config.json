@@ -1,21 +1,48 @@
 {
   "development": {
     "username": "root",
+    "password": "eugene",
+    "database": "database_development",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
+	"operatorsAliases": false,
+
+	"pool": {
+		"max": 5,
+		"min": 0,
+		"acquire": 30000,
+		"idle": 10000
+	},
+	"define": {
+		"charset": "utf8",
+		"collate": "utf8_general_ci", 
+		"timestamps": true
+	}
+  },
+  "test": {
+	"username": "root",
     "password": "Cowabunga1!",
     "database": "database_development",
     "host": "azrieldb.cqswtuvecky7.eu-central-1.rds.amazonaws.com",
-    "dialect": "mysql"
-  },
-  "test": {
-    "username": "root",
-    "password": "Cowabunga1!",
-    "database": "database_test",
-    "host": "127.0.0.1",
-    "dialect": "mysql"
+    "dialect": "mysql",
+	"operatorsAliases": false,
+
+	"pool": {
+		"max": 5,
+		"min": 0,
+		"acquire": 30000,
+		"idle": 10000
+	},
+	"define": {
+		"charset": "utf8",
+		"collate": "utf8_general_ci", 
+		"timestamps": true
+	}
+	
   },
   "production": {
     "username": "root",
-    "password": "Cowabunga1!",
+    "password": "eugene",
     "database": "database_production",
     "host": "127.0.0.1",
     "dialect": "mysql"
