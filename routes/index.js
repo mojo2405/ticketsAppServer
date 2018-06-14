@@ -25,24 +25,6 @@ if (config.use_env_variable) {
   
 }
 
-// const sequelize = new Sequelize('database_development', 'root', 'Cowabunga1!', {
-  // host: 'azrieldb.cqswtuvecky7.eu-central-1.rds.amazonaws.com',
-  // dialect: 'mysql',
-  // operatorsAliases: false,
-
-  // pool: {
-    // max: 5,
-    // min: 0,
-    // acquire: 30000,
-    // idle: 10000
-  // },
-  // define: {
-    // charset: 'utf8',
-    // collate: 'utf8_general_ci', 
-    // timestamps: true
-  // },
-
-// });
 
 sequelize
     .authenticate()
@@ -52,9 +34,6 @@ sequelize
 .catch(err => {
     console.error('Unable to connect to the database:', err);
 });
-
-
-
 
 
 
