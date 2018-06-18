@@ -8,9 +8,14 @@ var moment = require('moment');
 var request = require('request');
 var serviceAccount = require("./reports-app-203722-firebase-adminsdk-0tna4-58f28b5c7b.json");
 require('dotenv-safe').config();
+var app = require('../app');
+
+
 
 var env       = process.env.NODE_ENV || 'development';
 var config    = require(__dirname + '/../config/config.json')[env];
+bodyParser.json({limit: "50mb"});
+
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -43,12 +48,14 @@ const Driver = sequelize.import(__dirname + "/../models/driver");
 const TicketReport = sequelize.import(__dirname + "/../models/ticketreport");
 const ConsultancyTracking = sequelize.import(__dirname + "/../models/consultancy_tracking");
 const Leads = sequelize.import(__dirname + "/../models/leads");
+const Images = sequelize.import(__dirname + "/../models/images");
 
 // MODELS DEPENDANCIES
 User.hasMany(Driver,{as:'Drivers'});
 User.hasMany(TicketReport,{as:'TicketReports',foreignKey: 'userId', sourceKey: 'id'});
 Driver.hasMany(TicketReport,{as:'TicketReports',foreignKey: 'driverUserId', sourceKey: 'id'});
 TicketReport.hasMany(ConsultancyTracking,{as:'ConsultancyTrackings',foreignKey: 'TicketNumber', sourceKey: 'id'});
+TicketReport.hasMany(Images,{as:'Images',foreignKey: 'TicketNumber', sourceKey: 'id'});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -254,7 +261,7 @@ router.get('/get_drivers' , function(req, res, next){
 /* add ticket */
 router.post('/add_ticket', function(req, res, next) {
     verifyToken(req,res);
-    console.log(req.body);
+    // console.log(req.body);
 
     User.findOne({where:{ username: req.body.email }})
         .then(function (user) {
@@ -291,12 +298,34 @@ router.post('/add_ticket', function(req, res, next) {
                     SemelAvera: req.body.SemelAvera,
                     PenaltyPoints: req.body.PenaltyPoints,
                     PenaltyDate:  req.body.PenaltyDate,
-                    OfficeStatus: "ממתין לטיפול"
+                    OfficeStatus: "ממתין לטיפול",
+					apealReasonFreeText: req.body.apealReasonFreeText
                 }).then(ticket => {
-                    
+                    // If got a scan of the ID
+					if (req.body.idBlobBase64) {
+						Images.create({
+							ticketId: ticket.id,
+							imageType: "id",
+							imageBase64: req.body.idBlobBase64
+						});
+					}
+					// If got scan of proofs
+					if (req.body.proofsArrayBase64) {
+						var obj = JSON.parse(req.body.proofsArrayBase64);
+						for (i in obj) {
+							console.log("OK got proof");
+							Images.create({
+								ticketId: ticket.id,
+								imageType: "proof",
+								imageBase64: obj[i]
+							});
+						}
+					}
+					
 					var tickets = user.getTicketReports().then(tickets => {
 						return res.status(200).json({"tickets":tickets});
 					});
+					
 
 				});
 			}
