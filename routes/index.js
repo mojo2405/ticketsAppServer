@@ -118,43 +118,24 @@ router.post('/social_login', function(req, res, next) {
 		  //console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
 		  //console.log('body:', body); // Print the HTML for the Google homepage.
 		  if ( error || response.statusCode != 200 || !response) {
-			  return res.status(401).json({message:'Access token is invalid'});
+			  return res.status(410).json({message:'Access token is invalid'});
+		  }else {
+			  return socialLogin (req, res);
 		  }
 		});
 	} else if (req.body.loginType ==  "google") {
 		request('https://www.googleapis.com/oauth2/v3/tokeninfo?id_token='+req.body.access_token, function (error, response, body) {
 			if ( error || response.statusCode != 200 || !response) {
-			  return res.status(401).json({message:'Access token is invalid'});
+			  return res.status(410).json({message:'Access token is invalid'});
+			}else {
+			  return socialLogin (req, res);
 			}
 		});
 	}else {
 		return res.status(401).json({message:'Login Type is invalid. ' + req.body.loginType});
 	}
 	
-	User.findOne({where:{ username: req.body.email }})
-		.then(function (user) {
-			if(!user){
-				User.create({
-					username: req.body.email,
-					email: req.body.email,
-					pushToken: req.body.pushToken
-				})
-					.then(function(user){
-						return res.status(200).json({'token':createToken(user,req)});
-					});
-			} else {
-				user.update({
-					pushToken: req.body.pushToken
-				})
-				.then((user) => {
-					return res.status(200).json({'token':createToken(user,req)});
-				});
-			}
-		})
-		.catch(function (err) {
-			console.log("Got error: " + err.message);
-			return res.status(400).json({message:'Error in social login: ' + err.message});
-		});
+	
 
 });
 
@@ -309,6 +290,16 @@ router.post('/add_ticket', function(req, res, next) {
 							imageBase64: req.body.idBlobBase64
 						});
 					}
+					
+					// If got a scan of the report
+					if (req.body.scanBlobBase64) {
+						Images.create({
+							ticketId: ticket.id,
+							imageType: "scan",
+							imageBase64: req.body.scanBlobBase64
+						});
+					}
+					
 					// If got scan of proofs
 					if (req.body.proofsArrayBase64) {
 						var obj = JSON.parse(req.body.proofsArrayBase64);
@@ -462,6 +453,33 @@ router.put('/update_ticket_status' , function(req, res, next){
 
 module.exports = router;
 
+function socialLogin (req, res) {
+	User.findOne({where:{ username: req.body.email }})
+		.then(function (user) {
+			if(!user){
+				User.create({
+					username: req.body.email,
+					email: req.body.email,
+					pushToken: req.body.pushToken
+				})
+					.then(function(user){
+						return res.status(200).json({'token':createToken(user,req)});
+					});
+			} else {
+				user.update({
+					pushToken: req.body.pushToken
+				})
+				.then((user) => {
+					return res.status(200).json({'token':createToken(user,req)});
+				});
+			}
+		})
+		.catch(function (err) {
+			console.log("Got error: " + err.message);
+			return res.status(400).json({message:'Error in social login: ' + err.message});
+		});
+	
+}
 function createToken(user,req) {
 	var myToken = jwt.sign({ user: user.id },
 		'secret',
