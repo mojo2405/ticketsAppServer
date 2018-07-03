@@ -406,7 +406,7 @@ router.put('/update_ticket_status' , function(req, res, next){
                             var payload = {
                                 notification: {
                                     title: "סטטוס בקשה עודכן",
-                                    body: "התחבר על מנת לקבל את כל העדכונים החדשים"
+                                    body: req.body.message + " התחבר על מנת לקבל את כל העדכונים החדשים"
                                 }
                             };
 
