@@ -51,7 +51,8 @@ module.exports = (sequelize, DataTypes) => {
     SeifTakana: DataTypes.STRING,
     SemelAvera: DataTypes.STRING,
     PenaltyPoints: DataTypes.INTEGER,
-	apealReasonFreeText: DataTypes.STRING
+    apealReasonFreeText: DataTypes.STRING,
+    lastcomment: DataTypes.STRING
   }, {
     classMethods: {
       associate: function(models) {
