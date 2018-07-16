@@ -55,7 +55,7 @@ User.hasMany(Driver,{as:'Drivers'});
 User.hasMany(TicketReport,{as:'TicketReports',foreignKey: 'userId', sourceKey: 'id'});
 Driver.hasMany(TicketReport,{as:'TicketReports',foreignKey: 'driverUserId', sourceKey: 'id'});
 TicketReport.hasMany(ConsultancyTracking,{as:'ConsultancyTrackings',foreignKey: 'TicketNumber', sourceKey: 'id'});
-TicketReport.hasMany(Images,{as:'Images',foreignKey: 'TicketNumber', sourceKey: 'id'});
+TicketReport.hasMany(Images,{as:'Images',foreignKey: 'ticketId', sourceKey: 'id'});
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -339,13 +339,23 @@ router.get('/get_admin_tickets' , function(req, res, next){
         });
 });
 
-/* get admin tickets */
+/* get specific ticket */
 router.get('/get_admin_ticket/:ticket_id' , function(req, res, next){
     TicketReport.findOne({where:{ id: req.params.ticket_id }}).then(ticket => {
         res.status(200).json({data : ticket});
     })
         .catch(function (err) {
         res.status(400).json({message:'Error getting ticket ticket_id: '+ req.params.ticket_id });
+        });
+});
+
+/* get ticket photos */
+router.get('/get_ticket_photos/:ticket_id' , function(req, res, next){
+    Images.findOne({where:{ ticketId: req.params.ticket_id }}).then(photos => {
+        res.status(200).json({data : photos});
+    })
+        .catch(function (err) {
+        res.status(400).json({message:'Error getting photos for ticket ' + req.params.ticket_id + '  ticket_id: '+ req.params.ticket_id });
         });
 });
 
