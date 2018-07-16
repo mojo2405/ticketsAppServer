@@ -335,7 +335,7 @@ router.get('/get_admin_tickets' , function(req, res, next){
         res.status(200).json({data : tickets});
     })
         .catch(function (err) {
-        res.status(400).json({message:'Error creating user: '+ err.message});
+        res.status(400).json({message:'Error getting tickets: '+ err.message});
         });
 });
 
